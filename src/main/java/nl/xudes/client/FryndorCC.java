@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import nl.xudes.client.gui.DashboardScreen;
+import nl.xudes.client.module.ModuleManager;
 import org.lwjgl.glfw.GLFW;
 
 public class FryndorCC implements ClientModInitializer {
@@ -13,8 +15,10 @@ public class FryndorCC implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        ModuleManager.getInstance();
+
         homeKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.fryndorcc.k",
+            "key.fryndorcc.menu",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_K,
             "category.fryndorcc.main"
@@ -23,6 +27,10 @@ public class FryndorCC implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (homeKeyBinding.wasPressed()) {
                 client.setScreen(new DashboardScreen());
+            }
+
+            if (client.player != null && client.world != null) {
+                ModuleManager.getInstance().onTick();
             }
         });
     }
