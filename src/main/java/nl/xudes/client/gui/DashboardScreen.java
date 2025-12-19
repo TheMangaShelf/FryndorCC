@@ -15,7 +15,6 @@ import java.util.List;
 public class DashboardScreen extends Screen {
     
     private Category currentCategory = Category.COMBAT;
-
     private final int SIDEBAR_WIDTH = 100;
     private final int HEADER_HEIGHT = 40;
 
@@ -25,56 +24,83 @@ public class DashboardScreen extends Screen {
 
     @Override
     protected void init() {
-        int sidebarY = HEADER_HEIGHT + 20;
+        super.init();
+        buildInterface();
+    }
 
+    private void buildInterface() {
+        this.clearChildren();
+        
+        // 1. Add Sidebar
+        int sidebarY = HEADER_HEIGHT + 20;
         for (Category category : Category.values()) {
             CategoryButton btn = new CategoryButton(
-                10, 
-                sidebarY, 
-                SIDEBAR_WIDTH - 20, 
-                20, 
-                category, 
+                10, sidebarY, SIDEBAR_WIDTH - 20, 20, category, 
                 button -> selectCategory(category)
             );
-            
             if (category == currentCategory) btn.setActive(true);
-            
             this.addDrawableChild(btn);
             sidebarY += 25;
         }
 
-        refreshModuleButtons();
+        // 2. Add Modules (Vertical List Layout)
+        List<Module> modules = ModuleManager.getInstance().getModulesByCategory(currentCategory);
+        int startX = SIDEBAR_WIDTH + 20;
+        int currentY = HEADER_HEIGHT + 20;
+        int btnWidth = 160; // Wider buttons for settings
+        int btnHeight = 25;
+        int padding = 5;
+
+        for (Module mod : modules) {
+            // We create the button. 
+            // Note: In a real dynamic GUI, we would recalculate positions in render() 
+            // or store the buttons in a list to offset them dynamically. 
+            // For simplicity here, we add them, but the position update logic needs to happen 
+            // because expansion changes height.
+            
+            ModuleButton modBtn = new ModuleButton(startX, currentY, btnWidth, btnHeight, mod);
+            this.addDrawableChild(modBtn);
+            
+            // Initial spacing. 
+            // WARNING: This static init means if you expand one, the others WON'T move immediately 
+            // until we rebuild the interface. 
+            // To fix this, we need to update positions in render().
+            currentY += btnHeight + padding; 
+        }
     }
 
     private void selectCategory(Category category) {
         this.currentCategory = category;
-        this.children().stream()
-            .filter(element -> element instanceof CategoryButton)
-            .map(element -> (CategoryButton) element)
-            .forEach(btn -> btn.setActive(btn.getCategory() == category));
-
-        refreshModuleButtons();
+        buildInterface();
     }
 
-    private void refreshModuleButtons() {
-        this.clearChildren();
-        this.init(); 
-        List<Module> modules = ModuleManager.getInstance().getModulesByCategory(currentCategory);
-        int startX = SIDEBAR_WIDTH + 20;
-        int startY = HEADER_HEIGHT + 20;
-        int btnWidth = 100;
-        int btnHeight = 25;
-        int padding = 10;
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // We override mouseClicked to rebuild the interface if a Right Click (Expand) happens
+        // This forces the layout to recalculate positions based on the new expanded heights.
+        boolean result = super.mouseClicked(mouseX, mouseY, button);
+        if (button == 1) { // Right click
+            updateLayout(); 
+        }
+        return result;
+    }
+    
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+         // Forward drag events (for sliders) to children
+         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
 
-        for (int i = 0; i < modules.size(); i++) {
-            Module mod = modules.get(i);
-            int col = i % 3;
-            int row = i / 3;
-
-            int x = startX + (col * (btnWidth + padding));
-            int y = startY + (row * (btnHeight + padding));
-
-            this.addDrawableChild(new ModuleButton(x, y, btnWidth, btnHeight, mod));
+    private void updateLayout() {
+        // Recalculate Y positions based on expansion states
+        int currentY = HEADER_HEIGHT + 20;
+        int padding = 5;
+        
+        for (var child : this.children()) {
+            if (child instanceof ModuleButton modBtn) {
+                modBtn.setY(currentY);
+                currentY += modBtn.getTotalHeight() + padding;
+            }
         }
     }
 
@@ -84,6 +110,7 @@ public class DashboardScreen extends Screen {
         context.fill(0, 0, this.width, this.height, new Color(20, 20, 20, 150).getRGB());
         context.fill(0, 0, SIDEBAR_WIDTH, this.height, new Color(30, 30, 30, 255).getRGB());
         context.drawBorder(0, 0, SIDEBAR_WIDTH, this.height, 0x50FFFFFF);
+
         context.getMatrices().push();
         context.getMatrices().scale(1.5f, 1.5f, 1.5f);
         context.drawTextWithShadow(this.textRenderer, "FryndorCC", 10, 10, 0xFF5555FF);

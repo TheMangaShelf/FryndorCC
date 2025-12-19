@@ -3,6 +3,7 @@ package nl.xudes.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import nl.xudes.client.gui.DashboardScreen;
@@ -16,7 +17,6 @@ public class FryndorCC implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ModuleManager.getInstance();
-
         homeKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.fryndorcc.menu",
             InputUtil.Type.KEYSYM,
@@ -32,6 +32,11 @@ public class FryndorCC implements ClientModInitializer {
             if (client.player != null && client.world != null) {
                 ModuleManager.getInstance().onTick();
             }
+        });
+
+        HudRenderCallback.EVENT.register((context, tickDeltaManager) -> {
+            float tickDelta = tickDeltaManager.getTickDelta(false);
+            ModuleManager.getInstance().onRender(context, tickDelta);
         });
     }
 }
