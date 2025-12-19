@@ -31,7 +31,7 @@ public class DashboardScreen extends Screen {
     private void buildInterface() {
         this.clearChildren();
         
-        // 1. Add Sidebar
+        // 1. Sidebar
         int sidebarY = HEADER_HEIGHT + 20;
         for (Category category : Category.values()) {
             CategoryButton btn = new CategoryButton(
@@ -43,29 +43,19 @@ public class DashboardScreen extends Screen {
             sidebarY += 25;
         }
 
-        // 2. Add Modules (Vertical List Layout)
+        // 2. Modules
         List<Module> modules = ModuleManager.getInstance().getModulesByCategory(currentCategory);
         int startX = SIDEBAR_WIDTH + 20;
         int currentY = HEADER_HEIGHT + 20;
-        int btnWidth = 160; // Wider buttons for settings
-        int btnHeight = 25;
+        int btnWidth = 160;
         int padding = 5;
 
         for (Module mod : modules) {
-            // We create the button. 
-            // Note: In a real dynamic GUI, we would recalculate positions in render() 
-            // or store the buttons in a list to offset them dynamically. 
-            // For simplicity here, we add them, but the position update logic needs to happen 
-            // because expansion changes height.
-            
-            ModuleButton modBtn = new ModuleButton(startX, currentY, btnWidth, btnHeight, mod);
+            ModuleButton modBtn = new ModuleButton(startX, currentY, btnWidth, 25, mod);
+            // Ensure height is correct if it was previously expanded (persisting state logic could go here)
+            modBtn.updateHeight(); 
             this.addDrawableChild(modBtn);
-            
-            // Initial spacing. 
-            // WARNING: This static init means if you expand one, the others WON'T move immediately 
-            // until we rebuild the interface. 
-            // To fix this, we need to update positions in render().
-            currentY += btnHeight + padding; 
+            currentY += modBtn.getTotalHeight() + padding;
         }
     }
 
@@ -76,23 +66,17 @@ public class DashboardScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // We override mouseClicked to rebuild the interface if a Right Click (Expand) happens
-        // This forces the layout to recalculate positions based on the new expanded heights.
+        // Standard click handling
         boolean result = super.mouseClicked(mouseX, mouseY, button);
-        if (button == 1) { // Right click
+        
+        // If we right-clicked (Expand), update the layout immediately
+        if (button == 1) { 
             updateLayout(); 
         }
         return result;
     }
-    
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-         // Forward drag events (for sliders) to children
-         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
-    }
 
     private void updateLayout() {
-        // Recalculate Y positions based on expansion states
         int currentY = HEADER_HEIGHT + 20;
         int padding = 5;
         
