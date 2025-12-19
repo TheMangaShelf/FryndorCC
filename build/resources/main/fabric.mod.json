@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "fryndorcc",
+  "version": "1.0",
+  "name": "FryndorCC",
+  "description": "FryndorCC a mattie.",
+  "authors": ["XUD3S"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/FryndorCC/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "nl.xudes.client.FryndorCC"
+    ]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
